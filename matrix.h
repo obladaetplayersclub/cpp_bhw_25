@@ -1,5 +1,5 @@
 //
-// Created by Konstantin Okriashvili on 18.05.2025.
+// Created by Konstantin Okriashvili on 19.05.2025.
 //
 
 #ifndef MATRIX_H
@@ -7,7 +7,6 @@
 
 #include <iostream>
 #include <stdexcept>
-#include <string>
 
 class MatrixSchet : public std::logic_error {
  public:
@@ -17,7 +16,7 @@ class MatrixSchet : public std::logic_error {
 
 class MatrixOutOfRange : public std::out_of_range {
  public:
-  explicit MatrixOutOfRange(const std::string& what_arg) : std::out_of_range(what_arg) {
+  MatrixOutOfRange() : std::out_of_range("Вышли за пределы") {
   }
 };
 
@@ -37,202 +36,207 @@ class Matrix {
   const T& operator()(size_t i, size_t j) const {
     return matrix[i][j];
   }
-  const T& At(size_t i, size_t j) const {
-    if (i >= N || j >= M) {
-      throw MatrixOutOfRange("Вышли за пределы");
-    }
-
-    return matrix[i][j];
-  }
 
   T& At(size_t i, size_t j) {
     if (i >= N || j >= M) {
-      throw MatrixOutOfRange("Вышли за пределы");
+      throw MatrixOutOfRange{};
+    }
+    return matrix[i][j];
+  }
+
+  const T& At(size_t i, size_t j) const {
+    if (i >= N || j >= M) {
+      throw MatrixOutOfRange{};
     }
 
     return matrix[i][j];
   }
 
-  template <size_t O, size_t C>
-  Matrix<T, N, M> operator+(const Matrix<T, O, C>& other_matrix) const {
-    if ((N != O || M != C)) {
-      throw MatrixSchet();
-    }
-    Matrix<T, N, M> result;
+  Matrix<T, N, M>& operator+=(const Matrix& mtr2) {
     for (size_t i = 0; i < N; i++) {
       for (size_t j = 0; j < M; j++) {
-        result.matrix[i][j] = matrix[i][j] + other_matrix.matrix[i][j];
-      }
-    }
-    return result;
-  }
-
-  template <size_t O, size_t C>
-  Matrix<T, N, M> operator-(const Matrix<T, O, C>& mtr2) const {
-    if ((N != O || M != C)) {
-      throw MatrixSchet();
-    }
-    Matrix<T, N, M> result;
-    for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < M; j++) {
-        result.matrix[i][j] = matrix[i][j] - mtr2.matrix[i][j];
-      }
-    }
-    return result;
-  }
-
-  template <size_t O, size_t C>
-  Matrix<T, N, C> operator*(const Matrix<T, O, C>& mtr2) const {
-    if ((M != O)) {
-      throw MatrixSchet();
-    }
-    Matrix<T, N, C> result;
-    for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < C; j++) {
-        T prom = T();
-        for (size_t k = 0; k < M; k++) {
-          prom += matrix[i][k] * mtr2.matrix[k][j];
-        }
-        result.matrix[i][j] = prom;
-      }
-    }
-    return result;
-  }
-
-  template <size_t O, size_t C>
-  Matrix<T, N, M> operator+=(const Matrix<T, O, C>& mtr2) {
-    if ((N != O || M != C)) {
-      throw MatrixSchet();
-    }
-    for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < M; j++) {
-        matrix[i][j] += mtr2.matrix[i][j];
+        (*this)(i, j) += mtr2(i, j);
       }
     }
     return *this;
   }
 
-  template <size_t O, size_t C>
-  Matrix<T, N, M> operator-=(const Matrix<T, O, C>& mtr2) {
-    if ((N != O || M != C)) {
-      throw MatrixSchet();
-    }
+  Matrix<T, N, M>& operator-=(const Matrix& mtr2) {
     for (size_t i = 0; i < N; i++) {
       for (size_t j = 0; j < M; j++) {
-        matrix[i][j] -= mtr2.matrix[i][j];
+        (*this)(i, j) -= mtr2(i, j);
       }
     }
     return *this;
   }
 
-  template <size_t O, size_t C>
-  Matrix<T, N, C> operator*=(const Matrix<T, O, C>& other_matrix) {
-    if ((M != O)) {
-      throw MatrixSchet();
-    }
-    Matrix<T,N,C> prom;
+  Matrix<T, N, M>& operator*=(const Matrix<T, M, M>& mtr2) {
+    Matrix<T, N, M> prom;
     for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < C; j++) {
-        T sum = T();
+      for (size_t j = 0; j < M; j++) {
+        T sum{};
         for (size_t k = 0; k < M; k++) {
-          sum += matrix[i][k] * other_matrix.matrix[k][j];
+          sum += (*this)(i, k) * mtr2(k, j);
         }
-        prom.matrix[i][j] = sum;
+        prom(i, j) = sum;
       }
     }
     *this = prom;
     return *this;
   }
 
-  friend Matrix<T, N, M> operator*(const T& chisl, const Matrix<T, N, M>& matr) {
-    return matr * chisl;
-  }
-
-  Matrix<T, N, M> operator*(const T& chisl) const {
-    Matrix mtr;
+  Matrix& operator*=(const T& znach) {
     for (size_t i = 0; i < N; i++) {
       for (size_t j = 0; j < M; j++) {
-        mtr.matrix[i][j] = this->matrix[i][j] * chisl;
-      }
-    }
-    return mtr;
-  }
-
-  Matrix<T, N, M>& operator*=(const T& chisl) {
-    for (size_t i = 0; i < N; ++i) {
-      for (size_t j = 0; j < M; ++j) {
-        this->matrix[i][j] *= chisl;
+        (*this)(i, j) *= znach;
       }
     }
     return *this;
   }
 
-  Matrix<T, N, M> operator/(const T& chisl) {
-    Matrix mtr1;
+  Matrix& operator/=(const T& znach) {
     for (size_t i = 0; i < N; i++) {
       for (size_t j = 0; j < M; j++) {
-        mtr1.matrix[i][j] = this->matrix[i][j] / chisl;
-      }
-    }
-    return mtr1;
-  }
-
-  Matrix& operator/=(const T& scalar) {
-    for (size_t i = 0; i < N; ++i) {
-      for (size_t j = 0; j < M; ++j) {
-        matrix[i][j] /= scalar;
+        (*this)(i, j) /= znach;
       }
     }
     return *this;
-  }
-
-  friend std::ostream& operator<<(std::ostream& os, const Matrix<T, N, M>& matr) {
-    for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < M; j++) {
-        if (j + 1 < M) {
-          os << matr.matrix[i][j] << " ";
-        }
-      }
-      os << "\n";
-    }
-    return os;
-  }
-
-  friend std::istream& operator>>(std::istream& is, Matrix& mat) {
-    for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < M; j++) {
-        is >> mat.matrix[i][j];
-      }
-    }
-    return is;
-  }
-
-  template <size_t O, size_t C>
-  bool operator==(const Matrix<T, O, C>& mtr1) const {
-    for (size_t i = 0; i < N; i++) {
-      for (size_t j = 0; j < M; j++) {
-        if (this->matrix[i][j] != mtr1.matrix[i][j]) {
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  template <size_t O, size_t C>
-  bool operator!=(const Matrix<T, O, C>& mtr2) const {
-    return !(*this == mtr2);
-  }
-
-  friend Matrix<T, M, N> GetTransposed(const Matrix<T, N, M>& mtr2) {
-    Matrix<T, M, N> res;
-    for (size_t i = 0; i < M; i++) {
-      for (size_t j = 0; j < N; j++) {
-        res.matrix[i][j] = mtr2.matrix[j][i];
-      }
-    }
-    return res;
   }
 };
+
+template <class T, size_t N, size_t M, class S>
+Matrix<T, N, M> operator*(const S& znach, const Matrix<T, N, M>& mtr1) {
+  Matrix<T, N, M> res;
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      res(i, j) = static_cast<T>(znach) * mtr1(i, j);
+    }
+  }
+  return res;
+}
+
+template <class T, size_t N, size_t M, class S>
+Matrix<T, N, M> operator*(const Matrix<T, N, M>& mtr1, const S& znach) {
+  Matrix<T, N, M> res;
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      res(i, j) = mtr1(i, j) * static_cast<T>(znach);
+    }
+  }
+
+  return res;
+}
+
+template <class T, size_t N, size_t M, class S>
+Matrix<T, N, M> operator/(const Matrix<T, N, M>& mtr1, const S& znach) {
+  Matrix<T, N, M> res;
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      res(i, j) = mtr1(i, j) / static_cast<T>(znach);
+    }
+  }
+  return res;
+}
+
+template <class T, size_t N, size_t M>
+Matrix<T, M, N> GetTransposed(const Matrix<T, N, M>& mtr1) {
+  Matrix<T, M, N> res;
+  for (size_t i = 0; i < M; i++) {
+    for (size_t j = 0; j < N; j++) {
+      res(i, j) = mtr1(j, i);
+    }
+  }
+  return res;
+}
+
+template <class T, size_t N, size_t M>
+std::ostream& operator<<(std::ostream& os, const Matrix<T, N, M>& matr) {
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      if (j + 1 < M) {
+        os << matr(i, j) << " ";
+      }
+      else {
+        os << matr(i, j) << "\n";
+      }
+    }
+  }
+  return os;
+}
+
+template <class T, size_t N, size_t M>
+std::istream& operator>>(std::istream& is, Matrix<T, N, M>& mat) {
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      is >> mat(i, j);
+    }
+  }
+  return is;
+}
+
+template <class T, size_t N, size_t M>
+bool operator==(const Matrix<T, N, M>& mtr1, const Matrix<T, N, M>& mtr2) {
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      if (mtr1(i, j) != mtr2(i, j)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+template <class T, size_t N, size_t M>
+bool operator!=(const Matrix<T, N, M>& mtr1, const Matrix<T, N, M>& mtr2) {
+  return !(mtr1 == mtr2);
+}
+
+template <class T, size_t N, size_t M, size_t O, size_t P>
+Matrix<T, N, M> operator+(const Matrix<T, N, M>& mtr1, const Matrix<T, O, P>& mtr2) {
+  if (N != O || M != P) {
+    throw MatrixSchet{};
+  }
+  Matrix<T, N, M> res;
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      res(i, j) = mtr1(i, j) + mtr2(i, j);
+    }
+  }
+  return res;
+}
+
+template <class T, size_t N, size_t M, size_t O, size_t P>
+Matrix<T, N, M> operator-(const Matrix<T, N, M>& mtr1, const Matrix<T, O, P>& mtr2) {
+  if (N != O || M != P) {
+    throw MatrixSchet{};
+  }
+  Matrix<T, N, M> res;
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < M; j++) {
+      res(i, j) = mtr1(i, j) - mtr2(i, j);
+    }
+  }
+  return res;
+}
+
+template <class T, size_t N, size_t M, size_t O, size_t P>
+Matrix<T, N, P> operator*(const Matrix<T, N, M>& mtr1, const Matrix<T, O, P>& mtr2) {
+  if (M != O) {
+    throw MatrixSchet{};
+  }
+  Matrix<T, N, P> res;
+  for (size_t i = 0; i < N; i++) {
+    for (size_t j = 0; j < P; j++) {
+      T prom{};
+      for (size_t k = 0; k < M; k++) {
+        prom += mtr1(i, k) * mtr2(k, j);
+      }
+      res(i, j) = prom;
+    }
+  }
+  return res;
+}
+
+// Доп часть будет;
 
 #endif  // MATRIX_H
