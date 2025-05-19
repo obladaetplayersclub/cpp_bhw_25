@@ -1,0 +1,3 @@
+/Users/konstantinokriashvili/CLionProjects/matrix/cmake-build-debug/CMakeFiles/matrix.h.dir
+/Users/konstantinokriashvili/CLionProjects/matrix/cmake-build-debug/CMakeFiles/edit_cache.dir
+/Users/konstantinokriashvili/CLionProjects/matrix/cmake-build-debug/CMakeFiles/rebuild_cache.dir
